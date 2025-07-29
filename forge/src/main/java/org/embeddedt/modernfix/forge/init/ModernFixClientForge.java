@@ -23,13 +23,10 @@ import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
-import net.minecraftforge.fml.loading.FMLPaths;
-import net.minecraftforge.forgespi.language.ModFileScanData;
 import org.embeddedt.modernfix.ModernFixClient;
 import org.embeddedt.modernfix.core.ModernFixMixinPlugin;
 import org.embeddedt.modernfix.forge.config.NightConfigFixer;
 import org.embeddedt.modernfix.screen.ModernFixConfigScreen;
-import org.objectweb.asm.Type;
 
 public final class ModernFixClientForge {
     private static final ModernFixClient COMMON = new ModernFixClient();
@@ -40,8 +37,8 @@ public final class ModernFixClientForge {
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::keyBindRegister);
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onClientSetup);
         ModLoadingContext.get().registerExtensionPoint(
-            ConfigScreenHandler.ConfigScreenFactory.class,
-            () -> new ConfigScreenHandler.ConfigScreenFactory((mc, screen) -> new ModernFixConfigScreen(screen))
+                ConfigScreenHandler.ConfigScreenFactory.class,
+                () -> new ConfigScreenHandler.ConfigScreenFactory((mc, screen) -> new ModernFixConfigScreen(screen))
         );
         BRANDING[0] = "";
         BRANDING[1] = COMMON.brandingString;
@@ -53,12 +50,10 @@ public final class ModernFixClientForge {
     }
 
     private void onClientSetup(FMLClientSetupEvent event) {
-        if(ModernFixMixinPlugin.instance.isOptionEnabled("perf.dynamic_resources.ConnectednessCheck") 
-            && ModList.get().isLoaded("connectedness")) {
-            event.enqueueWork(() -> {
-                ModLoadingContext.get().getActiveContainer().getModInfo().getOwningFile()
-                    .addWarning("modernfix.connectedness_dynresoruces");
-            });
+        if(ModernFixMixinPlugin.instance.isOptionEnabled("perf.dynamic_resources.ConnectednessCheck")
+                && ModList.get().isLoaded("connectedness")) {
+            event.enqueueWork(() -> ModLoadingContext.get().getContainer().getModInfo().getOwningFile()
+                    .addWarning("modernfix.connectedness_dynresoruces"));
         }
     }
 
@@ -72,8 +67,8 @@ public final class ModernFixClientForge {
     @SubscribeEvent(priority = EventPriority.LOW)
     public void onClientChat(RegisterClientCommandsEvent event) {
         event.getDispatcher().register(
-            LiteralArgumentBuilder.<CommandSourceStack>literal("mfrc")
-                .executes(ctx -> { NightConfigFixer.runReloads(); return 1; })
+                LiteralArgumentBuilder.<CommandSourceStack>literal("mfrc")
+                        .executes(ctx -> { NightConfigFixer.runReloads(); return 1; })
         );
     }
 
@@ -96,9 +91,9 @@ public final class ModernFixClientForge {
     public void onDisconnect(LevelEvent.Unload event) {
         if(event.getLevel().isClientSide()) {
             DebugScreenOverlay overlay = ObfuscationReflectionHelper.getPrivateValue(
-                Minecraft.getInstance().gui.getClass(),
-                Minecraft.getInstance().gui,
-                "debugOverlay"
+                    Minecraft.getInstance().gui.getClass(),
+                    Minecraft.getInstance().gui,
+                    "debugOverlay"
             );
             if(overlay != null) Minecraft.getInstance().tell(overlay::clearChunkCache);
         }
