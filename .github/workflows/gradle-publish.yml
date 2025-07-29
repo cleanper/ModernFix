@@ -1,0 +1,80 @@
+name: Gradle Build & Publish
+
+on:
+  release:
+    types: [created]
+  push:
+    branches: ['**']
+  workflow_dispatch:
+
+env:
+  PROJECT_VERSION: '1.20'
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        ref: ${{ github.ref }}
+
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: 'gradle'
+        server-id: github
+        settings-path: ${{ github.workspace }}
+
+    - name: Cache Gradle
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+          ~/.gradle/daemon
+        key: ${{ runner.os }}-gradle-${{ env.PROJECT_VERSION }}-${{ hashFiles('**/*.gradle*') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-${{ env.PROJECT_VERSION }}-
+          ${{ runner.os }}-gradle-
+
+    - name: Setup Gradle
+      uses: gradle/gradle-build-action@v3
+
+    - name: Build with Gradle
+      run: |
+        ./gradlew build -Pversion=${{ env.PROJECT_VERSION }} --no-daemon --stacktrace --continue || true
+        mkdir -p ${{ runner.temp }}/output
+        find . -name "*.jar" -exec cp {} ${{ runner.temp }}/output \;
+
+    - name: Create full project archive
+      run: |
+        zip -r ${{ runner.temp }}/project_source_${{ env.PROJECT_VERSION }}.zip . -x '*.git*' '*.gradle*' 'build/*'
+
+    - name: Upload JAR artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: jar_artifacts_${{ env.PROJECT_VERSION }}
+        path: ${{ runner.temp }}/output/*.jar
+        retention-days: 0
+
+    - name: Upload project archive
+      uses: actions/upload-artifact@v4
+      with:
+        name: project_source_${{ env.PROJECT_VERSION }}
+        path: ${{ runner.temp }}/project_source_${{ env.PROJECT_VERSION }}.zip
+        retention-days: 3
+
+    - name: Publish to GitHub Packages
+      if: success()
+      run: ./gradlew publish -Pversion=${{ env.PROJECT_VERSION }} --no-daemon --stacktrace
+      env:
+        USERNAME: ${{ github.actor }}
+        TOKEN: ${{ secrets.GITHUB_TOKEN }}
