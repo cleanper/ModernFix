@@ -11,6 +11,7 @@ import net.minecraftforge.client.event.CustomizeGuiOverlayEvent;
 import net.minecraftforge.client.event.RecipesUpdatedEvent;
 import net.minecraftforge.client.event.RegisterClientCommandsEvent;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
+import net.minecraftforge.client.gui.overlay.ForgeGui;
 import net.minecraftforge.client.settings.KeyConflictContext;
 import net.minecraftforge.event.TagsUpdatedEvent;
 import net.minecraftforge.event.TickEvent;
@@ -30,7 +31,7 @@ import org.embeddedt.modernfix.screen.ModernFixConfigScreen;
 
 public final class ModernFixClientForge {
     private static final ModernFixClient COMMON = new ModernFixClient();
-    private static final String[] BRANDING = new String[2];
+    private static final String[] BRANDING = new String[] {"", COMMON.brandingString};
     private KeyMapping configKey;
 
     public ModernFixClientForge() {
@@ -40,8 +41,6 @@ public final class ModernFixClientForge {
                 ConfigScreenHandler.ConfigScreenFactory.class,
                 () -> new ConfigScreenHandler.ConfigScreenFactory((mc, screen) -> new ModernFixConfigScreen(screen))
         );
-        BRANDING[0] = "";
-        BRANDING[1] = COMMON.brandingString;
     }
 
     private void keyBindRegister(RegisterKeyMappingsEvent event) {
@@ -52,8 +51,10 @@ public final class ModernFixClientForge {
     private void onClientSetup(FMLClientSetupEvent event) {
         if(ModernFixMixinPlugin.instance.isOptionEnabled("perf.dynamic_resources.ConnectednessCheck")
                 && ModList.get().isLoaded("connectedness")) {
-            event.enqueueWork(() -> ModLoadingContext.get().getContainer().getModInfo().getOwningFile()
-                    .addWarning("modernfix.connectedness_dynresoruces"));
+            event.enqueueWork(() ->
+                    ModLoadingContext.get().getContainer().getModInfo().getOwningFile()
+                            .addWarning("modernfix.connectedness_dynresoruces")
+            );
         }
     }
 
@@ -91,8 +92,8 @@ public final class ModernFixClientForge {
     public void onDisconnect(LevelEvent.Unload event) {
         if(event.getLevel().isClientSide()) {
             DebugScreenOverlay overlay = ObfuscationReflectionHelper.getPrivateValue(
-                    Minecraft.getInstance().gui.getClass(),
-                    Minecraft.getInstance().gui,
+                    ForgeGui.class,
+                    (ForgeGui)Minecraft.getInstance().gui,
                     "debugOverlay"
             );
             if(overlay != null) Minecraft.getInstance().tell(overlay::clearChunkCache);
