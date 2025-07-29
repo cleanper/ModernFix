@@ -23,13 +23,13 @@ import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
-import net.minecraftforge.fml.loading.moddiscovery.ModLoadingWarning;
-import net.minecraftforge.fml.loading.FMLEnvironment;
-import net.minecraftforge.fml.loading.LoadingModList;
+import net.minecraftforge.fml.loading.FMLPaths;
+import net.minecraftforge.forgespi.language.ModFileScanData;
 import org.embeddedt.modernfix.ModernFixClient;
 import org.embeddedt.modernfix.core.ModernFixMixinPlugin;
 import org.embeddedt.modernfix.forge.config.NightConfigFixer;
 import org.embeddedt.modernfix.screen.ModernFixConfigScreen;
+import org.objectweb.asm.Type;
 
 public final class ModernFixClientForge {
     private static final ModernFixClient COMMON = new ModernFixClient();
@@ -55,19 +55,16 @@ public final class ModernFixClientForge {
     private void onClientSetup(FMLClientSetupEvent event) {
         if(ModernFixMixinPlugin.instance.isOptionEnabled("perf.dynamic_resources.ConnectednessCheck") 
             && ModList.get().isLoaded("connectedness")) {
-            event.enqueueWork(() -> 
-                ModLoadingContext.get().getActiveContainer().addWarning(new ModLoadingWarning(
-                    ModLoadingContext.get().getActiveContainer().getModInfo(),
-                    net.minecraftforge.fml.loading.moddiscovery.ModLoadingStage.SIDED_SETUP,
-                    "modernfix.connectedness_dynresoruces"
-                ))
-            );
+            event.enqueueWork(() -> {
+                ModLoadingContext.get().getActiveContainer().getModInfo().getOwningFile()
+                    .addWarning("modernfix.connectedness_dynresoruces");
+            });
         }
     }
 
     @SubscribeEvent
     public void onConfigKey(TickEvent.ClientTickEvent event) {
-        if(event.phase == TickEvent.Phase.START && configKey.consumeClick()) {
+        if(event.phase == TickEvent.Phase.START && configKey != null && configKey.consumeClick()) {
             Minecraft.getInstance().setScreen(new ModernFixConfigScreen(Minecraft.getInstance().screen));
         }
     }
@@ -82,7 +79,7 @@ public final class ModernFixClientForge {
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onRenderOverlay(CustomizeGuiOverlayEvent.DebugText event) {
-        if(COMMON.brandingString != null && Minecraft.getInstance().options.renderDebug()) {
+        if(COMMON.brandingString != null && Minecraft.getInstance().options.renderDebug().get()) {
             var right = event.getRight();
             int blanks = 0, idx = 0;
             while(idx < right.size() && blanks < 3) {
