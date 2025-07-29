@@ -20,8 +20,12 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.ModList;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
+import net.minecraftforge.fml.loading.moddiscovery.ModLoadingWarning;
+import net.minecraftforge.fml.loading.FMLEnvironment;
+import net.minecraftforge.fml.loading.LoadingModList;
 import org.embeddedt.modernfix.ModernFixClient;
 import org.embeddedt.modernfix.core.ModernFixMixinPlugin;
 import org.embeddedt.modernfix.forge.config.NightConfigFixer;
@@ -54,7 +58,7 @@ public final class ModernFixClientForge {
             event.enqueueWork(() -> 
                 ModLoadingContext.get().getActiveContainer().addWarning(new ModLoadingWarning(
                     ModLoadingContext.get().getActiveContainer().getModInfo(),
-                    ModLoadingStage.SIDED_SETUP,
+                    net.minecraftforge.fml.loading.moddiscovery.ModLoadingStage.SIDED_SETUP,
                     "modernfix.connectedness_dynresoruces"
                 ))
             );
@@ -78,7 +82,7 @@ public final class ModernFixClientForge {
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onRenderOverlay(CustomizeGuiOverlayEvent.DebugText event) {
-        if(COMMON.brandingString != null && Minecraft.getInstance().options.renderDebug) {
+        if(COMMON.brandingString != null && Minecraft.getInstance().options.renderDebug()) {
             var right = event.getRight();
             int blanks = 0, idx = 0;
             while(idx < right.size() && blanks < 3) {
