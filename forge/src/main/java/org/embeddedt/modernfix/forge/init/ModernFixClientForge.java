@@ -75,7 +75,7 @@ public class ModernFixClientForge {
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onRenderOverlay(CustomizeGuiOverlayEvent.DebugText event) {
-        if (commonMod.brandingString != null && Minecraft.getInstance().options.renderDebug()) {
+        if (commonMod.brandingString != null && Minecraft.getInstance().options.renderDebug) {
             if (brandingList.isEmpty()) {
                 brandingList.add("");
                 brandingList.add(commonMod.brandingString);
